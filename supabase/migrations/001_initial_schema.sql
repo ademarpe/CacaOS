@@ -130,7 +130,7 @@ BEGIN
       IF NEW.motivo_anulacion IS NULL OR trim(NEW.motivo_anulacion) = '' THEN
         RAISE EXCEPTION 'Se requiere motivo de anulación';
       END IF;
-    ELSIF OLD.estado = 'BORRADOR' AND NEW.estado = 'PENDIENTE_PAGO' THEN
+    ELSIF OLD.estado = 'BORRADOR' AND NEW.estado IN ('PENDIENTE_PAGO', 'COMPLETADA') THEN
       NULL;
     ELSIF OLD.estado = 'PENDIENTE_PAGO' AND NEW.estado = 'COMPLETADA' THEN
       NULL;
