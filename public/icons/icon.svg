@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="32" fill="#7c5430"/>
+  <circle cx="100" cy="95" r="45" fill="#5c3a1e"/>
+  <ellipse cx="100" cy="95" rx="28" ry="25" fill="#3d2817"/>
+  <circle cx="85" cy="80" r="6" fill="#9e7a5a" opacity="0.6"/>
+  <circle cx="115" cy="80" r="5" fill="#9e7a5a" opacity="0.6"/>
+  <circle cx="100" cy="110" r="5" fill="#9e7a5a" opacity="0.6"/>
+  <text x="100" y="170" text-anchor="middle" fill="white" font-family="system-ui" font-size="22" font-weight="600">CacaoOS</text>
+</svg>
