@@ -162,7 +162,7 @@ export function AppHeader() {
             </span>
 
             {/* Avatar / Perfil */}
-            <div className="relative" ref={menuRef}>
+            <div ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -190,37 +190,38 @@ export function AppHeader() {
                   />
                 )}
               </button>
-
-              {/* Dropdown menu */}
-              {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 animate-slide-down rounded-xl border border-border/50 bg-surface py-1 shadow-xl">
-                  {user && (
-                    <div className="border-b border-border/50 px-4 py-2.5">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {user.user_metadata?.full_name ?? "Usuario"}
-                      </p>
-                      <p className="truncate text-xs text-muted">
-                        {user.email ?? ""}
-                      </p>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      signOut();
-                      setMenuOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-danger transition-colors hover:bg-danger/5"
-                  >
-                    <LogOut size={15} />
-                    Cerrar sesión
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Dropdown menu — FUERA del clipPath para que se superponga sobre todo */}
+      {menuOpen && (
+        <div
+          ref={menuRef}
+          className="absolute right-4 top-14 z-[100] w-48 animate-slide-down rounded-xl border border-border/50 bg-surface py-1 shadow-xl"
+        >
+          {user && (
+            <div className="border-b border-border/50 px-4 py-2.5">
+              <p className="truncate text-sm font-medium text-foreground">
+                {user.user_metadata?.full_name ?? "Usuario"}
+              </p>
+              <p className="truncate text-xs text-muted">{user.email ?? ""}</p>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              signOut();
+              setMenuOpen(false);
+            }}
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-danger transition-colors hover:bg-danger/5"
+          >
+            <LogOut size={15} />
+            Cerrar sesión
+          </button>
+        </div>
+      )}
     </header>
   );
 }
