@@ -23,6 +23,7 @@ import { BalanceCard } from "@/components/BalanceCard";
 import { MetricStrip } from "@/components/MetricStrip";
 import { QuickActionCard } from "@/components/QuickActionCard";
 import { Skeleton } from "@/components/Skeleton";
+import { useAuth } from "@/components/AuthProvider";
 import {
   obtenerCajaHoy,
   obtenerDashboard,
@@ -40,6 +41,7 @@ function getFecha(): string {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [dashboard, setDashboard] = useState<DashboardDiario | null>(null);
   const [caja, setCaja] = useState<CajaSesion | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,6 +61,8 @@ export default function DashboardPage() {
     }
     load();
   }, []);
+
+  const userName = user?.user_metadata?.full_name ?? "Usuario";
 
   if (loading) {
     return (
@@ -87,7 +91,7 @@ export default function DashboardPage() {
           Hola de nuevo,
         </p>
         <h1 className="-mt-0.5 text-xl font-bold text-cacao-dark">
-          <span className="text-accent">Comprador Demo</span>
+          <span className="text-accent">{userName}</span>
         </h1>
         <p className="mt-1 text-sm capitalize text-muted">
           {getFecha()}

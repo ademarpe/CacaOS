@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { CheckIcon, CloseCircleIcon, BackIcon } from "@/components/icons";
 import { Icon } from "@/components/Icon";
+import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/Toast";
 import {
   abrirCaja,
@@ -23,9 +24,10 @@ import { formatMoney } from "@/lib/types/database";
 import { Skeleton } from "@/components/Skeleton";
 
 export default function CajaPage() {
+  const { user } = useAuth();
   const [caja, setCaja] = useState<CajaSesion | null>(null);
   const [saldoInicial, setSaldoInicial] = useState("5000");
-  const [comprador, setComprador] = useState("Comprador Demo");
+  const [comprador, setComprador] = useState(user?.user_metadata?.full_name ?? "Usuario");
   const [loading, setLoading] = useState(true);
   const [abriendo, setAbriendo] = useState(false);
   const [cerrando, setCerrando] = useState(false);

@@ -20,10 +20,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [user, loading, configured, router, pathname]);
 
   // Show spinner only while auth is being checked
+  // bg-white to match login page and avoid abrupt color flash
   if (loading && configured) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cacao/30 border-t-cacao" />
+      <div className="flex min-h-dvh items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-cacao" />
       </div>
     );
   }

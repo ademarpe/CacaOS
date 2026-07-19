@@ -268,6 +268,5 @@ INSERT INTO lista_precios_semanal (semana_inicio, tipo_cacao, precio_kg) VALUES
   (date_trunc('week', CURRENT_DATE)::date, 'SECO', 15.00),
   (date_trunc('week', CURRENT_DATE)::date, 'SEGUNDA_EN_BABA', 8.00);
 
-INSERT INTO caja_sesiones (fecha, saldo_inicial, saldo_actual, estado, comprador_nombre)
-VALUES (CURRENT_DATE, 5000.00, 5000.00, 'ABIERTA', 'Comprador Demo')
-ON CONFLICT (fecha) DO NOTHING;
+-- ❌ Se eliminó el seed de caja_sesiones para evitar datos demo
+-- Cada usuario debe abrir su propia caja

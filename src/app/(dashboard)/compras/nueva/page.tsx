@@ -15,6 +15,7 @@ import {
   obtenerPrecioVigente,
   registrarCompraCompleta,
 } from "@/lib/services/compras";
+import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/Toast";
 import type {
   CalidadCacao,
@@ -32,6 +33,7 @@ import {
 type Step = "productor" | "datos" | "confirmar";
 
 export default function NuevaCompraPage() {
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("productor");
   const [query, setQuery] = useState("");
   const [resultados, setResultados] = useState<Productor[]>([]);
@@ -120,7 +122,7 @@ export default function NuevaCompraPage() {
         precio_sugerido: precioSugerido,
         precio_aplicado: parseFloat(precioAplicado),
         observaciones: observaciones || undefined,
-        comprador_nombre: "Comprador Demo",
+        comprador_nombre: user?.user_metadata?.full_name ?? "Usuario",
       });
       setSuccess(true);
     } catch (err) {
