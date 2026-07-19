@@ -691,6 +691,83 @@ export async function registrarCompraCompleta(
   return completarCompra(borrador.id, input.comprador_nombre);
 }
 
+export async function eliminarCompra(compraId: string): Promise<void> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { error } = await supabase
+      .from("compras")
+      .delete()
+      .eq("id", compraId)
+      .eq("estado", "BORRADOR");
+    if (error) throw error;
+    return;
+  }
+
+  const store = loadStore();
+  const idx = store.compras.findIndex((c) => c.id === compraId);
+  if (idx === -1) throw new Error("Compra no encontrada");
+  if (store.compras[idx].estado !== "BORRADOR") {
+    throw new Error("Solo se pueden eliminar compras en estado borrador");
+  }
+  store.compras.splice(idx, 1);
+  enqueueSync(store, "compras", "update", { id: compraId, _deleted: true });
+  saveStore(store);
+}
+
+export async function editarCompraCompletada(
+  compraId: string,
+  cambios: { peso?: number; precio_aplicado?: number }
+): Promise<Compra> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase.rpc("editar_compra_completada", {
+      p_compra_id: compraId,
+      p_peso: cambios.peso ?? null,
+      p_precio: cambios.precio_aplicado ?? null,
+    });
+    if (error) throw error;
+    return data as Compra;
+  }
+
+  const store = loadStore();
+  const idx = store.compras.findIndex((c) => c.id === compraId);
+  if (idx === -1) throw new Error("Compra no encontrada");
+
+  const compra = store.compras[idx];
+  if (compra.estado !== "COMPLETADA") {
+    throw new Error("Solo se pueden editar compras completadas");
+  }
+
+  const oldTotal = compra.total;
+  if (cambios.peso !== undefined) compra.peso = cambios.peso;
+  if (cambios.precio_aplicado !== undefined) compra.precio_aplicado = cambios.precio_aplicado;
+  compra.total = calcularTotal(compra.peso, compra.precio_aplicado);
+  compra.updated_at = new Date().toISOString();
+
+  const diff = compra.total - oldTotal;
+  if (diff !== 0) {
+    const caja = store.caja_sesiones.find(
+      (c) => c.fecha === today() && c.estado === "ABIERTA"
+    );
+    if (!caja) throw new Error("No hay caja abierta para hoy");
+    if (caja.saldo_actual < diff) throw new Error("Saldo insuficiente en caja para el ajuste");
+    caja.saldo_actual -= diff;
+
+    const mov = store.movimientos_caja.find((m) => m.compra_id === compraId);
+    if (mov) mov.monto = compra.total;
+  }
+
+  store.compras[idx] = compra;
+  enqueueSync(store, "compras", "update", {
+    id: compraId,
+    peso: compra.peso,
+    precio_aplicado: compra.precio_aplicado,
+    total: compra.total,
+  });
+  saveStore(store);
+  return compra;
+}
+
 export async function anularCompra(compraId: string, motivo: string): Promise<Compra> {
   const supabase = getSupabase();
   if (supabase) {

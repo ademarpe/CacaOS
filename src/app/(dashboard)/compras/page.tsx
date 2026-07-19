@@ -6,7 +6,7 @@ import { ClipboardList, Info } from "lucide-react";
 import { Icon } from "@/components/Icon";
 import { EditIcon, CloseCircleIcon, PlusCircleIcon, CheckIcon, BackIcon } from "@/components/icons";
 import { useToast } from "@/components/Toast";
-import { actualizarCompra, anularCompra, listarCompras } from "@/lib/services/compras";
+import { actualizarCompra, anularCompra, editarCompraCompletada, eliminarCompra, listarCompras } from "@/lib/services/compras";
 import type { Compra } from "@/lib/types/database";
 import {
   ESTADOS_COMPRA,
@@ -24,6 +24,7 @@ export default function HistorialComprasPage() {
   const [editando, setEditando] = useState<string | null>(null);
   const [editPeso, setEditPeso] = useState("");
   const [editPrecio, setEditPrecio] = useState("");
+  const [eliminando, setEliminando] = useState<string | null>(null);
   const toasts = useToast();
 
   async function load(f?: string) {
@@ -55,16 +56,34 @@ export default function HistorialComprasPage() {
     if (!editPeso || parseFloat(editPeso) <= 0) return;
     if (!editPrecio || parseFloat(editPrecio) <= 0) return;
     try {
-      await actualizarCompra(compra.id, {
-        peso: parseFloat(editPeso),
-        precio_aplicado: parseFloat(editPrecio),
-      });
+      if (compra.estado === "COMPLETADA") {
+        await editarCompraCompletada(compra.id, {
+          peso: parseFloat(editPeso),
+          precio_aplicado: parseFloat(editPrecio),
+        });
+      } else {
+        await actualizarCompra(compra.id, {
+          peso: parseFloat(editPeso),
+          precio_aplicado: parseFloat(editPrecio),
+        });
+      }
       setEditando(null);
       setEditPeso("");
       setEditPrecio("");
       await load(fecha);
     } catch (err) {
       toasts.error(err instanceof Error ? err.message : "Error al editar compra");
+    }
+  }
+
+  async function handleEliminar(id: string) {
+    try {
+      await eliminarCompra(id);
+      setEliminando(null);
+      toasts.success("Compra eliminada");
+      await load(fecha);
+    } catch (err) {
+      toasts.error(err instanceof Error ? err.message : "Error al eliminar compra");
     }
   }
 
@@ -137,19 +156,56 @@ export default function HistorialComprasPage() {
               </p>
             )}
 
-            {c.estado === "BORRADOR" && editando !== c.id && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditando(c.id);
-                  setEditPeso(String(c.peso));
-                  setEditPrecio(String(c.precio_aplicado));
-                }}
-                className="mt-2 flex items-center gap-1 text-xs text-accent transition-colors hover:text-accent-light"
-              >
-                <EditIcon size={12} />
-                Editar compra
-              </button>
+            {(c.estado === "BORRADOR" || c.estado === "COMPLETADA") && editando !== c.id && (
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditando(c.id);
+                    setEditPeso(String(c.peso));
+                    setEditPrecio(String(c.precio_aplicado));
+                  }}
+                  className="flex items-center gap-1 text-xs text-accent transition-colors hover:text-accent-light"
+                >
+                  <EditIcon size={12} />
+                  Editar
+                </button>
+                {c.estado === "BORRADOR" && (
+                  <>
+                    <span className="text-xs text-border">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setEliminando(c.id)}
+                      className="flex items-center gap-1 text-xs text-danger transition-colors hover:text-red-700"
+                    >
+                      <CloseCircleIcon size={12} />
+                      Eliminar
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {eliminando === c.id && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger/5 p-3">
+                <p className="flex-1 text-xs text-danger">
+                  ¿Eliminar esta compra?
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setEliminando(null)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleEliminar(c.id)}
+                  className="rounded-lg bg-danger px-3 py-1.5 text-xs text-white"
+                >
+                  Eliminar
+                </button>
+              </div>
             )}
 
             {editando === c.id && (
@@ -166,7 +222,7 @@ export default function HistorialComprasPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted">Precio (S//kg)</label>
+                  <label className="text-xs text-muted">Precio (S/ kg)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -176,7 +232,8 @@ export default function HistorialComprasPage() {
                     className="w-full rounded-lg border border-border px-3 py-2 text-sm"
                   />
                 </div>
-                <div className="flex gap-2">                    <button
+                <div className="flex gap-2">
+                  <button
                       type="button"
                       onClick={() => setEditando(null)}
                       className="flex-1 rounded-lg border py-2 text-xs flex items-center justify-center gap-1"
@@ -194,7 +251,9 @@ export default function HistorialComprasPage() {
                   </button>
                 </div>
               </div>
-            )}                {c.estado === "COMPLETADA" && anulando !== c.id && (
+            )}
+
+            {c.estado === "COMPLETADA" && anulando !== c.id && editando !== c.id && (
               <button
                 type="button"
                 onClick={() => setAnulando(c.id)}
