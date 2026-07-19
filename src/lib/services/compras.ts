@@ -836,20 +836,69 @@ export async function listarCompras(fecha?: string): Promise<Compra[]> {
     .sort((a, b) => b.hora.localeCompare(a.hora));
 }
 
-export async function obtenerDashboard(): Promise<DashboardDiario> {
-  const compras = await listarCompras();
+export async function obtenerDashboard(fecha?: string): Promise<DashboardDiario> {
+  const targetDate = fecha ?? today();
+  const compras = await listarCompras(targetDate);
   const completadas = compras.filter((c) => c.estado === "COMPLETADA");
   const kg = completadas.reduce((s, c) => s + c.peso, 0);
   const total = completadas.reduce((s, c) => s + c.total, 0);
   const productores = new Set(completadas.map((c) => c.productor_id));
 
   return {
-    fecha: today(),
+    fecha: targetDate,
     kg_comprados: kg,
     productores_atendidos: productores.size,
     total_pagado: total,
     precio_promedio_kg: kg > 0 ? total / kg : 0,
     num_compras: completadas.length,
+  };
+}
+
+function getYesterday(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split("T")[0];
+}
+
+function formatPercentChange(today: number, yesterday: number): string {
+  if (yesterday === 0) {
+    return today > 0 ? "Nuevo" : "—";
+  }
+  const pct = ((today - yesterday) / yesterday) * 100;
+  const sign = pct > 0 ? "+" : "";
+  return `${sign}${pct.toFixed(1)}%`;
+}
+
+function formatAbsChange(today: number, yesterday: number): string {
+  if (yesterday === 0 && today === 0) return "—";
+  if (today === yesterday) return "Sin cambios";
+  const diff = today - yesterday;
+  const sign = diff > 0 ? "+" : "";
+  return `${sign}${diff}`;
+}
+
+export interface DashboardComparativo {
+  hoy: DashboardDiario;
+  ayer: DashboardDiario;
+  kgComparacion: string;
+  pagadoComparacion: string;
+  productoresComparacion: string;
+  comprasComparacion: string;
+}
+
+export async function obtenerDashboardComparativo(): Promise<DashboardComparativo> {
+  const [hoy, ayer] = await Promise.all([
+    obtenerDashboard(),
+    obtenerDashboard(getYesterday()),
+  ]);
+
+  return {
+    hoy,
+    ayer,
+    kgComparacion: formatPercentChange(hoy.kg_comprados, ayer.kg_comprados),
+    pagadoComparacion: formatPercentChange(hoy.total_pagado, ayer.total_pagado),
+    productoresComparacion: formatAbsChange(hoy.productores_atendidos, ayer.productores_atendidos),
+    comprasComparacion: formatAbsChange(hoy.num_compras, ayer.num_compras),
   };
 }
 

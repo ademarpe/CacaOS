@@ -26,9 +26,10 @@ import { Skeleton } from "@/components/Skeleton";
 import { useAuth } from "@/components/AuthProvider";
 import {
   obtenerCajaHoy,
-  obtenerDashboard,
+  obtenerDashboardComparativo,
 } from "@/lib/services/compras";
-import type { CajaSesion, DashboardDiario } from "@/lib/types/database";
+import type { DashboardComparativo } from "@/lib/services/compras";
+import type { CajaSesion } from "@/lib/types/database";
 import { formatKg, formatMoney } from "@/lib/types/database";
 
 function getFecha(): string {
@@ -42,7 +43,7 @@ function getFecha(): string {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [dashboard, setDashboard] = useState<DashboardDiario | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardComparativo | null>(null);
   const [caja, setCaja] = useState<CajaSesion | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +51,7 @@ export default function DashboardPage() {
     async function load() {
       try {
         const [dash, cajaHoy] = await Promise.all([
-          obtenerDashboard(),
+          obtenerDashboardComparativo(),
           obtenerCajaHoy(),
         ]);
         setDashboard(dash);
@@ -120,10 +121,30 @@ export default function DashboardPage() {
       <div className="animate-slide-up">
         <MetricStrip
           items={[
-            { label: "Kg", value: formatKg(dashboard?.kg_comprados ?? 0), icon: Scale, color: "green" as const, comparison: "+8% vs ayer" },
-            { label: "Pagado", value: formatMoney(dashboard?.total_pagado ?? 0), icon: HandCoins, color: "brown" as const, comparison: "+12% vs ayer" },
-            { label: "Productores", value: String(dashboard?.productores_atendidos ?? 0), icon: Users, color: "green" as const, comparison: "Sin cambios" },
-            { label: "Compras", value: String(dashboard?.num_compras ?? 0), icon: ShoppingCart, color: "brown" as const, comparison: "+1 vs ayer" },
+            {
+              label: "Kg", value: formatKg(dashboard?.hoy.kg_comprados ?? 0), icon: Scale, color: "green" as const,
+              comparison: dashboard?.kgComparacion && !["—", "Nuevo"].includes(dashboard.kgComparacion)
+                ? `${dashboard.kgComparacion} vs ayer`
+                : (dashboard?.kgComparacion ?? "—"),
+            },
+            {
+              label: "Pagado", value: formatMoney(dashboard?.hoy.total_pagado ?? 0), icon: HandCoins, color: "brown" as const,
+              comparison: dashboard?.pagadoComparacion && !["—", "Nuevo"].includes(dashboard.pagadoComparacion)
+                ? `${dashboard.pagadoComparacion} vs ayer`
+                : (dashboard?.pagadoComparacion ?? "—"),
+            },
+            {
+              label: "Productores", value: String(dashboard?.hoy.productores_atendidos ?? 0), icon: Users, color: "green" as const,
+              comparison: dashboard?.productoresComparacion && !["—", "Sin cambios"].includes(dashboard.productoresComparacion)
+                ? `${dashboard.productoresComparacion} vs ayer`
+                : (dashboard?.productoresComparacion ?? "—"),
+            },
+            {
+              label: "Compras", value: String(dashboard?.hoy.num_compras ?? 0), icon: ShoppingCart, color: "brown" as const,
+              comparison: dashboard?.comprasComparacion && !["—", "Sin cambios"].includes(dashboard.comprasComparacion)
+                ? `${dashboard.comprasComparacion} vs ayer`
+                : (dashboard?.comprasComparacion ?? "—"),
+            },
           ]}
         />
       </div>
