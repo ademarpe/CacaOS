@@ -603,7 +603,7 @@ export async function crearCompra(input: NuevaCompraInput): Promise<Compra> {
     calidad: input.calidad,
     humedad: input.humedad,
     tipo_cacao: input.tipo_cacao,
-    precio_sugerido: input.precio_sugerido,
+    precio_sugerido: input.precio_sugerido > 0 ? input.precio_sugerido : input.precio_aplicado,
     precio_aplicado: input.precio_aplicado,
     total,
     observaciones: input.observaciones,
