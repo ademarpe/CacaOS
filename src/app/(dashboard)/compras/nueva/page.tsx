@@ -126,7 +126,19 @@ export default function NuevaCompraPage() {
       });
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al registrar compra");
+      console.error("❌ Error al registrar compra:", err);
+      let message: string;
+      try {
+        message =
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : JSON.stringify(err, Object.getOwnPropertyNames(err));
+      } catch {
+        message = String(err);
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
