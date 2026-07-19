@@ -28,12 +28,13 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // ❌ Only cache GET requests — HEAD, POST, OPTIONS etc. crash cache.put()
+  // ❌ Only cache GET requests — HEAD, POST, OPTIONS crash cache.put()
   if (request.method !== "GET") return;
 
-  const url = new URL(request.url);
-
-  // Cache-first for static assets (JS, CSS, images, fonts)
+  // ⚡ Cache-first ONLY for static assets (JS, CSS, fonts, images)
+  // Navigation/document requests are NOT intercepted — the app needs
+  // to be online (Supabase), and intercepting pages causes crashes
+  // when cache misses and network is unavailable.
   if (
     request.destination === "script" ||
     request.destination === "style" ||
@@ -46,14 +47,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for navigation and API calls
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        return response;
-      })
-      .catch(() => caches.match(request))
-  );
+  // For navigation, API calls, etc. — let the browser handle natively.
+  // No event.respondWith() means the browser does a normal fetch.
 });
