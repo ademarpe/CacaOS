@@ -77,13 +77,19 @@ export default function HistorialComprasPage() {
   }
 
   async function handleEliminar(id: string) {
+    // Optimistic update: remover de la lista local inmediatamente
+    setCompras((prev) => prev.filter((c) => c.id !== id));
+    setEliminando(null);
+    toasts.success("Compra eliminada");
+
     try {
       await eliminarCompra(id);
-      setEliminando(null);
-      toasts.success("Compra eliminada");
+      // Refresh desde DB para asegurar consistencia
       await load(fecha);
     } catch (err) {
       toasts.error(err instanceof Error ? err.message : "Error al eliminar compra");
+      // Si falló la eliminación remota, recargar para restaurar la lista real
+      await load(fecha);
     }
   }
 
