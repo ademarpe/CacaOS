@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { WifiOff, Wifi, AlertCircle, LogOut, ChevronDown } from "lucide-react";
 import { CheckIcon, RefreshIcon } from "./icons";
 import { useAuth } from "./AuthProvider";
@@ -20,6 +21,7 @@ type SyncFeedback =
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [modo, setModo] = useState<"supabase" | "local">("local");
@@ -85,84 +87,74 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* SVG clipPath definition — responsive, no rendering artifacts */}
-      <svg className="pointer-events-none absolute h-0 w-0" aria-hidden="true">
-        <defs>
-          <clipPath id="headerShape" clipPathUnits="objectBoundingBox">
-            {/*
-              Left side (~0-55%): content height (y=0.53)
-              Center (~55-72%): smooth bezier descent
-              Right side (~72-100%): full extended height (y=1.0)
-            */}
-            <path d="M0,0 L1,0 L1,1 C0.72,1 0.58,0.53 0,0.53 Z" />
-          </clipPath>
-        </defs>
-      </svg>
+      {/* Ref wrapper: engloba tanto el botón como el dropdown para el toggle correcto */}
+      <div ref={menuRef}>
+        {/* SVG clipPath definition */}
+        <svg className="pointer-events-none absolute h-0 w-0" aria-hidden="true">
+          <defs>
+            <clipPath id="headerShape" clipPathUnits="objectBoundingBox">
+              <path d="M0,0 L1,0 L1,1 C0.72,1 0.58,0.53 0,0.53 Z" />
+            </clipPath>
+          </defs>
+        </svg>
 
-      <div
-        className="relative bg-gradient-to-b from-[#120600] to-cacao text-white shadow-lg pb-16"
-        style={{ clipPath: "url(#headerShape)" }}
-      >
-        {/* Main content row */}
-        <div className="relative mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 group"
-          >
-            <Image
-              src={logoImg}
-              alt="CacaoOS"
-              width={44}
-              height={44}
-              className="object-contain transition-transform duration-300 group-hover:scale-105"
-            />
-          </Link>
+        <div
+          className="relative bg-gradient-to-b from-[#120600] to-cacao text-white shadow-lg pb-16"
+          style={{ clipPath: "url(#headerShape)" }}
+        >
+          {/* Main content row */}
+          <div className="relative mx-auto flex max-w-lg items-center justify-between px-4 py-3">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <Image
+                src={logoImg}
+                alt="CacaoOS"
+                width={44}
+                height={44}
+                className="object-contain transition-transform duration-300 group-hover:scale-105"
+              />
+            </Link>
 
-          <div className="flex items-center gap-3">
-            {feedback ? (
-              <span
-                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white ${
-                  feedback.type === "success"
-                    ? "bg-accent/90"
-                    : "bg-danger/90"
-                }`}
-              >
-                {feedback.type === "success" ? (
-                  <CheckIcon size={11} />
-                ) : (
-                  <AlertCircle size={11} />
-                )}
-                {feedback.type === "success"
-                  ? `${feedback.count} sinc.`
-                  : `${feedback.count} err.`}
+            <div className="flex items-center gap-3">
+              {feedback ? (
+                <span
+                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white ${
+                    feedback.type === "success"
+                      ? "bg-accent/90"
+                      : "bg-danger/90"
+                  }`}
+                >
+                  {feedback.type === "success" ? (
+                    <CheckIcon size={11} />
+                  ) : (
+                    <AlertCircle size={11} />
+                  )}
+                  {feedback.type === "success"
+                    ? `${feedback.count} sinc.`
+                    : `${feedback.count} err.`}
+                </span>
+              ) : !online ? (
+                <span className="flex items-center gap-1 rounded-full bg-danger/80 px-2.5 py-1 text-[11px] font-medium text-white">
+                  <WifiOff size={11} />
+                  Sin conexión
+                </span>
+              ) : online && modo === "supabase" && pendientes > 0 ? (
+                <button
+                  type="button"
+                  onClick={ejecutarSync}
+                  disabled={syncing}
+                  className="flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[11px] transition-all hover:bg-white/30 disabled:opacity-50"
+                >
+                  <RefreshIcon size={11} className={syncing ? "animate-spin" : ""} />
+                  {syncing ? "..." : `${pendientes}`}
+                </button>
+              ) : null}
+
+              <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
+                <Wifi size={11} className="text-white/60" />
+                {modo === "supabase" ? "Online" : "Local"}
               </span>
-            ) : !online ? (
-              <span className="flex items-center gap-1 rounded-full bg-danger/80 px-2.5 py-1 text-[11px] font-medium text-white">
-                <WifiOff size={11} />
-                Sin conexión
-              </span>
-            ) : online && modo === "supabase" && pendientes > 0 ? (
-              <button
-                type="button"
-                onClick={ejecutarSync}
-                disabled={syncing}
-                className="flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[11px] transition-all hover:bg-white/30 disabled:opacity-50"
-              >
-                <RefreshIcon
-                  size={11}
-                  className={syncing ? "animate-spin" : ""}
-                />
-                {syncing ? "..." : `${pendientes}`}
-              </button>
-            ) : null}
 
-            <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
-              <Wifi size={11} className="text-white/60" />
-              {modo === "supabase" ? "Online" : "Local"}
-            </span>
-
-            {/* Avatar / Perfil */}
-            <div ref={menuRef}>
+              {/* Avatar / Perfil */}
               <button
                 type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -193,35 +185,33 @@ export function AppHeader() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Dropdown menu — FUERA del clipPath para que se superponga sobre todo */}
-      {menuOpen && (
-        <div
-          ref={menuRef}
-          className="absolute right-4 top-14 z-[100] w-48 animate-slide-down rounded-xl border border-border/50 bg-surface py-1 shadow-xl"
-        >
-          {user && (
-            <div className="border-b border-border/50 px-4 py-2.5">
-              <p className="truncate text-sm font-medium text-foreground">
-                {user.user_metadata?.full_name ?? "Usuario"}
-              </p>
-              <p className="truncate text-xs text-muted">{user.email ?? ""}</p>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              signOut();
-              setMenuOpen(false);
-            }}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-danger transition-colors hover:bg-danger/5"
-          >
-            <LogOut size={15} />
-            Cerrar sesión
-          </button>
-        </div>
-      )}
+        {/* Dropdown menu — FUERA del clipPath, DENTRO del ref wrapper */}
+        {menuOpen && (
+          <div className="absolute right-4 top-14 z-[100] w-48 animate-slide-down rounded-xl border border-border/50 bg-surface py-1 shadow-xl">
+            {user && (
+              <div className="border-b border-border/50 px-4 py-2.5">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {user.user_metadata?.full_name ?? "Usuario"}
+                </p>
+                <p className="truncate text-xs text-muted">{user.email ?? ""}</p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={async () => {
+                setMenuOpen(false);
+                await signOut();
+                router.push("/login");
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-danger transition-colors hover:bg-danger/5"
+            >
+              <LogOut size={15} />
+              Cerrar sesión
+            </button>
+          </div>
+        )}
+      </div>
     </header>
   );
 }

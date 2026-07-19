@@ -262,11 +262,8 @@ CREATE POLICY "Acceso autenticado caja" ON caja_sesiones FOR ALL USING (true);
 CREATE POLICY "Acceso autenticado precios" ON lista_precios_semanal FOR ALL USING (true);
 CREATE POLICY "Acceso autenticado historial_precios" ON historial_precios FOR ALL USING (true);
 
--- Datos semilla para desarrollo
-INSERT INTO lista_precios_semanal (semana_inicio, tipo_cacao, precio_kg) VALUES
-  (date_trunc('week', CURRENT_DATE)::date, 'BABA', 10.00),
-  (date_trunc('week', CURRENT_DATE)::date, 'SECO', 15.00),
-  (date_trunc('week', CURRENT_DATE)::date, 'SEGUNDA_EN_BABA', 8.00);
+-- ❌ Se eliminaron todos los datos semilla
+-- Cada usuario empieza desde 0
 
 -- ❌ Se eliminó el seed de caja_sesiones para evitar datos demo
 -- Cada usuario debe abrir su propia caja
