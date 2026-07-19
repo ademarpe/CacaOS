@@ -27,6 +27,10 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
+
+  // ❌ Only cache GET requests — HEAD, POST, OPTIONS etc. crash cache.put()
+  if (request.method !== "GET") return;
+
   const url = new URL(request.url);
 
   // Cache-first for static assets (JS, CSS, images, fonts)

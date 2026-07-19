@@ -11,7 +11,13 @@ export function getSupabase(): SupabaseClient | null {
   }
 
   if (!client) {
-    client = createClient(url, key);
+    client = createClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
   }
 
   return client;

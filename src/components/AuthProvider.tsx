@@ -7,7 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { type SupabaseClient, type User } from "@supabase/supabase-js";
+import { getSupabase } from "@/lib/supabase/client";
 
 type AuthContextValue = {
   user: User | null;
@@ -29,30 +30,13 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-function createSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key || url.includes("your-project")) {
-    return null;
-  }
-
-  return createClient(url, key, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  });
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const client = createSupabaseClient();
+    const client = getSupabase();
     setSupabase(client);
 
     if (!client) {
