@@ -4,11 +4,7 @@ import "@fontsource/poppins/400.css";
 import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/600.css";
 import "@fontsource/poppins/700.css";
-import { AppHeader } from "@/components/AppHeader";
-import { ServiceWorker } from "@/components/ServiceWorker";
-import { ToastProvider } from "@/components/Toast";
 import { AuthProvider } from "@/components/AuthProvider";
-import { AuthGuard } from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "CacaoOS – Compras",
@@ -39,13 +35,7 @@ export default function RootLayout({
         <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
       </head>
       <body className="antialiased h-dvh overflow-y-auto">
-        <AuthProvider>
-          <AuthGuard>
-            <AppHeader />
-            <main className="mx-auto max-w-lg px-4 pb-6 pt-4">{children}</main>
-            <ServiceWorker />
-          </AuthGuard>
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
