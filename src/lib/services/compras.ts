@@ -396,11 +396,91 @@ export async function obtenerCajaHoy(): Promise<CajaSesion | null> {
 }
 
 export async function abrirCaja(saldoInicial: number, comprador: string): Promise<CajaSesion> {
-  const cajaExistente = await obtenerCajaHoy();
-  if (cajaExistente) {
+  const supabase = getSupabase();
+
+  // Check if there's an open caja today
+  const cajaAbierta = await obtenerCajaHoy();
+  if (cajaAbierta) {
     throw new Error("Ya existe una caja abierta para hoy. Ciérrala antes de abrir una nueva.");
   }
 
+  if (supabase) {
+    // Check if there's a CLOSED caja for today — reopen it instead of inserting
+    const { data: cajaCerrada, error: errBuscar } = await supabase
+      .from("caja_sesiones")
+      .select("*")
+      .eq("fecha", today())
+      .eq("estado", "CERRADA")
+      .maybeSingle();
+    if (errBuscar) throw errBuscar;
+
+    if (cajaCerrada) {
+      // Reopen existing caja
+      const { data, error } = await supabase
+        .from("caja_sesiones")
+        .update({
+          estado: "ABIERTA",
+          saldo_inicial: saldoInicial,
+          saldo_actual: saldoInicial,
+          comprador_nombre: comprador,
+          opened_at: new Date().toISOString(),
+          closed_at: null,
+        })
+        .eq("id", cajaCerrada.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as CajaSesion;
+    }
+
+    // No existing caja for today — create new one
+    const sesion: CajaSesion = {
+      id: uuidv4(),
+      fecha: today(),
+      saldo_inicial: saldoInicial,
+      saldo_actual: saldoInicial,
+      estado: "ABIERTA",
+      comprador_nombre: comprador,
+      opened_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("caja_sesiones")
+      .insert(sesion)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as CajaSesion;
+  }
+
+  // Offline mode
+  const store = loadStore();
+
+  // Check if there's a closed caja for today — reopen it
+  const cerrada = store.caja_sesiones.find(
+    (c) => c.fecha === today() && c.estado === "CERRADA"
+  );
+  if (cerrada) {
+    cerrada.estado = "ABIERTA";
+    cerrada.saldo_inicial = saldoInicial;
+    cerrada.saldo_actual = saldoInicial;
+    cerrada.comprador_nombre = comprador;
+    cerrada.opened_at = new Date().toISOString();
+    cerrada.closed_at = null;
+    enqueueSync(store, "caja_sesiones", "update", {
+      id: cerrada.id,
+      estado: "ABIERTA",
+      saldo_inicial: saldoInicial,
+      saldo_actual: saldoInicial,
+      comprador_nombre: comprador,
+      opened_at: cerrada.opened_at,
+      closed_at: null,
+    });
+    saveStore(store);
+    return cerrada;
+  }
+
+  // No existing caja — create new one
   const sesion: CajaSesion = {
     id: uuidv4(),
     fecha: today(),
@@ -411,18 +491,6 @@ export async function abrirCaja(saldoInicial: number, comprador: string): Promis
     opened_at: new Date().toISOString(),
   };
 
-  const supabase = getSupabase();
-  if (supabase) {
-    const { data, error } = await supabase
-      .from("caja_sesiones")
-      .insert(sesion)
-      .select()
-      .single();
-    if (error) throw error;
-    return data as CajaSesion;
-  }
-
-  const store = loadStore();
   store.caja_sesiones.push(sesion);
   enqueueSync(store, "caja_sesiones", "insert", sesion);
   saveStore(store);
