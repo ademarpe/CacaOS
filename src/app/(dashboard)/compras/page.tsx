@@ -41,9 +41,8 @@ export default function HistorialComprasPage() {
   }, [fecha]);
 
   async function handleAnular(id: string) {
-    if (!motivo.trim()) return;
     try {
-      await anularCompra(id, motivo);
+      await anularCompra(id, motivo.trim() || undefined);
       setAnulando(null);
       setMotivo("");
       await load(fecha);

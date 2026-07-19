@@ -117,6 +117,17 @@ export async function actualizarProductor(
 export async function eliminarProductor(id: string): Promise<void> {
   const supabase = getSupabase();
   if (supabase) {
+    // Verificar si tiene compras antes de eliminar
+    const { data: compras, error: errCompras } = await supabase
+      .from("compras")
+      .select("id")
+      .eq("productor_id", id)
+      .limit(1);
+    if (errCompras) throw errCompras;
+    if (compras && compras.length > 0) {
+      throw new Error("No se puede eliminar un productor con compras registradas");
+    }
+
     const { error } = await supabase.from("productores").delete().eq("id", id);
     if (error) throw error;
     return;
@@ -768,12 +779,12 @@ export async function editarCompraCompletada(
   return compra;
 }
 
-export async function anularCompra(compraId: string, motivo: string): Promise<Compra> {
+export async function anularCompra(compraId: string, motivo?: string): Promise<Compra> {
   const supabase = getSupabase();
   if (supabase) {
     const { data, error } = await supabase.rpc("anular_compra", {
       p_compra_id: compraId,
-      p_motivo: motivo,
+      p_motivo: motivo ?? null,
     });
     if (error) throw error;
     return data as Compra;
@@ -790,7 +801,7 @@ export async function anularCompra(compraId: string, motivo: string): Promise<Co
   }
 
   compra.estado = "ANULADA";
-  compra.motivo_anulacion = motivo;
+  compra.motivo_anulacion = motivo ?? null;
   compra.updated_at = new Date().toISOString();
   compras[idx] = compra;
 
@@ -805,7 +816,7 @@ export async function anularCompra(compraId: string, motivo: string): Promise<Co
 
   enqueueSync(store, "compras", "rpc", {
     rpc_name: "anular_compra",
-    params: { p_compra_id: compra.id, p_motivo: motivo },
+    params: { p_compra_id: compra.id, p_motivo: motivo ?? null },
   });
   saveStore(store);
   return compra;
