@@ -2,8 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Sprout } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 
 export default function LoginPage() {
@@ -18,8 +16,8 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-[#120600] to-cacao">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+      <div className="flex min-h-dvh items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-cacao" />
       </div>
     );
   }
@@ -29,26 +27,28 @@ export default function LoginPage() {
   const configurado = supabase !== null;
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-[#120600] to-cacao px-6 text-white">
-      <div className="animate-fade-in w-full max-w-sm text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-white px-6">
+      <div className="w-full max-w-sm text-center">
         {/* Logo */}
-        <Link href="/" className="mb-6 inline-flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/20">
-            <Sprout size={28} className="text-accent" />
+        <div className="mb-10 flex justify-center">
+          <div className="relative">
+            <img
+              src="/cacao-logo.png"
+              alt="CacaoOS"
+              className="h-28 w-28 object-contain drop-shadow-sm"
+            />
           </div>
-          <span className="text-2xl font-bold">CacaoOS</span>
-        </Link>
+        </div>
 
-        <h1 className="text-xl font-semibold">Módulo de Compras</h1>
-        <p className="mt-1 text-sm text-white/60">
-          Inicia sesión para gestionar tus compras de cacao
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+          Inicia sesión
+        </h1>
 
         {/* Google Sign-In */}
         {configurado ? (
           <button
             onClick={signInWithGoogle}
-            className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl bg-white px-5 py-3 font-medium text-[#120600] shadow-lg transition-all hover:bg-white/90 active:scale-[0.98]"
+            className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-3.5 font-medium text-gray-700 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md active:scale-[0.98]"
           >
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path
@@ -68,25 +68,20 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Iniciar sesión con Google
+            Continuar con Google
           </button>
         ) : (
-          <div className="mt-8 space-y-3 rounded-xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
-            <p className="text-sm text-white/70">
+          <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4">
+            <p className="text-sm text-gray-500">
               Supabase no está configurado. Agrega las variables de entorno para
               habilitar la autenticación.
-            </p>
-            <p className="rounded-lg bg-white/5 px-3 py-2 font-mono text-xs text-white/50">
-              NEXT_PUBLIC_SUPABASE_URL=
-              <br />
-              NEXT_PUBLIC_SUPABASE_ANON_KEY=
             </p>
           </div>
         )}
 
         {/* Footer */}
-        <p className="mt-8 text-xs text-white/40">
-          Al iniciar sesión, aceptas los términos de uso de CacaoOS
+        <p className="mt-10 text-xs text-gray-400">
+          Al continuar, aceptas los términos de uso de CacaoOS
         </p>
       </div>
     </div>
